@@ -138,6 +138,15 @@ public class Tooltip extends ViewGroup {
         }
 
         this.addView(contentView, params);
+
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isCancelable) {
+                    dismiss(animate);
+                }
+            }
+        });
     }
 
     @Override
@@ -190,6 +199,7 @@ public class Tooltip extends ViewGroup {
         isAttached = false;
     }
 
+    /*
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (isCancelable) {
@@ -198,6 +208,9 @@ public class Tooltip extends ViewGroup {
 
         return false;
     }
+    */
+
+
 
     private void doLayout(boolean changed, int l, int t, int r, int b) {
 

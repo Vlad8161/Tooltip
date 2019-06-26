@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                 .autoAdjust(true)
                 .withPadding(tooltipPadding)
                 .content(content)
-                .cancelable(false)
+                .cancelable(true)
                 .autoCancel(3000)
                 .withTip(new Tooltip.Tip(tipSizeRegular, tipSizeRegular, tooltipColor, tipRadius))
                 .into(root)
