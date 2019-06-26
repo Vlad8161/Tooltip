@@ -32,67 +32,49 @@ import java.lang.annotation.RetentionPolicy;
 @SuppressLint("ViewConstructor")
 public class Tooltip extends ViewGroup {
 
-    private static final String TAG = "Tooltip";
-
     public static final int NO_AUTO_CANCEL = 0;
-    private static final int MIN_INT_VALUE = -2147483648;
-
-    private boolean debug = false;
-
-    private View contentView;
-    private View anchorView;
-
-    private int[] anchorLocation = new int[2];
-    private int[] holderLocation = new int[2];
-
-    @Position
-    private int position;
-
-    private boolean isCancelable = true;
-    private boolean autoAdjust = true;
-
-    private int padding;
-
-    private Listener builderListener;
-    private Listener listener;
-
-    private Tip tip;
-    private Paint tipPaint;
-    private Path tipPath;
-    private boolean showTip = false;
-
-    private Point anchorPoint = new Point();
-    private int[] tooltipSize = new int[2];
-
     public static final int LEFT = 0;
     public static final int TOP = 1;
     public static final int RIGHT = 2;
     public static final int BOTTOM = 3;
-    @IntDef({LEFT, TOP, RIGHT, BOTTOM})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Position {}
-
+    private static final String TAG = "Tooltip";
+    private static final int MIN_INT_VALUE = -2147483648;
+    private boolean debug = false;
+    private View contentView;
+    private View anchorView;
+    private int[] anchorLocation = new int[2];
+    private int[] holderLocation = new int[2];
+    @Position
+    private int position;
+    private boolean isCancelable = true;
+    private boolean autoAdjust = true;
+    private int padding;
+    private Listener builderListener;
+    private Listener listener;
+    private Tip tip;
+    private Paint tipPaint;
+    private Path tipPath;
+    private boolean showTip = false;
+    private Point anchorPoint = new Point();
+    private int[] tooltipSize = new int[2];
     private TooltipAnimation animation;
     private boolean animate = false;
     private boolean hasAnimatedIn = false;
-
     // To avoid multiple click dismiss error (in animation)
     private boolean isDismissed = false;
     private boolean isDismissAnimationInProgress = false;
-
-    // Coordinator anchored view BS
     /**
      * If we have made a call to {@link #doLayout(boolean, int, int, int, int)} or not
      */
     private boolean hasDrawn = false;
 
+    // Coordinator anchored view BS
     /**
      * If the anchor is anchored to some view in CoordinatorLayout, we get incorrect data
      * about its position in the window. So we need to wait for a preDraw event and then
      * draw tooltip and layout its contents.
      */
     private boolean checkForPreDraw = false;
-
     /**
      * If the view is attached to window or not
      */
@@ -258,10 +240,10 @@ public class Tooltip extends ViewGroup {
 
                 if (showTip) {
                     px = left + w + tip.getHeight();
-                    py = top + h/2;
+                    py = top + h / 2;
                     tipPath.moveTo(px, py);
-                    tipPath.lineTo(px - tip.getHeight(), py + tip.getWidth()/2);
-                    tipPath.lineTo(px - tip.getHeight(), py - tip.getWidth()/2);
+                    tipPath.lineTo(px - tip.getHeight(), py + tip.getWidth() / 2);
+                    tipPath.lineTo(px - tip.getHeight(), py - tip.getWidth() / 2);
                     tipPath.lineTo(px, py);
                 }
 
@@ -279,10 +261,10 @@ public class Tooltip extends ViewGroup {
 
                 if (showTip) {
                     px = left - tip.getHeight();
-                    py = top + h/2;
+                    py = top + h / 2;
                     tipPath.moveTo(px, py);
-                    tipPath.lineTo(px + tip.getHeight(), py + tip.getWidth()/2);
-                    tipPath.lineTo(px + tip.getHeight(), py - tip.getWidth()/2);
+                    tipPath.lineTo(px + tip.getHeight(), py + tip.getWidth() / 2);
+                    tipPath.lineTo(px + tip.getHeight(), py - tip.getWidth() / 2);
                     tipPath.lineTo(px, py);
                 }
 
@@ -389,11 +371,11 @@ public class Tooltip extends ViewGroup {
 
             switch (position) {
                 case TOP:
-                    px = left + child.getMeasuredWidth()/2;
+                    px = left + child.getMeasuredWidth() / 2;
                     py = top + child.getMeasuredHeight();
                     break;
                 case BOTTOM:
-                    px = left + child.getMeasuredWidth()/2;
+                    px = left + child.getMeasuredWidth() / 2;
                     py = top;
                     break;
                 case LEFT:
@@ -402,7 +384,7 @@ public class Tooltip extends ViewGroup {
                     break;
                 case RIGHT:
                     px = left;
-                    py = top + child.getMeasuredHeight()/2;
+                    py = top + child.getMeasuredHeight() / 2;
                     break;
             }
         }
@@ -438,7 +420,6 @@ public class Tooltip extends ViewGroup {
         return isCancelable;
     }
 
-
     /**
      * Dismiss and remove Tooltip from the view.
      * No animation is performed.
@@ -465,6 +446,7 @@ public class Tooltip extends ViewGroup {
 
     /**
      * Dismiss and remove Tooltip from the view.
+     *
      * @param animate Animation is performed if true
      */
     public void dismiss(boolean animate) {
@@ -517,7 +499,12 @@ public class Tooltip extends ViewGroup {
         }
 
         final Animator animator = getAnimator(animation, point, size, true);
-        if (animator != null) {
+        Boolean isTooltipShown = (Boolean) getTag();
+        if (isTooltipShown == null) {
+            isTooltipShown = false;
+        }
+        if (animator != null && !isTooltipShown) {
+            setTag(true);
             animator.start();
             animation.hideContentWhenAnimatingIn(animator, contentView);
         }
@@ -608,31 +595,38 @@ public class Tooltip extends ViewGroup {
             return;
         }
 
-        animator.start();
-        isDismissAnimationInProgress = true;
-        animation.hideContentWhenAnimatingOut(contentView);
+        Boolean isTooltipShown = (Boolean) getTag();
+        if (isTooltipShown == null) {
+            isTooltipShown = false;
+        }
 
-        animator.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
+        if (isTooltipShown) {
+            animator.start();
+            isDismissAnimationInProgress = true;
+            animation.hideContentWhenAnimatingOut(contentView);
 
-            }
+            animator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                dismiss();
-            }
+                }
 
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                dismiss();
-            }
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    dismiss();
+                }
 
-            @Override
-            public void onAnimationRepeat(Animator animation) {
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    dismiss();
+                }
 
-            }
-        });
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+        }
     }
 
     @Nullable
@@ -641,16 +635,28 @@ public class Tooltip extends ViewGroup {
 
         switch (position) {
             case BOTTOM:
-                return AnimationUtils.scaleY(contentView, size[0]/2, 0 , startScale, endScale, animation.getDuration());
+                return AnimationUtils.scaleY(contentView, size[0] / 2, 0, startScale, endScale, animation.getDuration());
             case TOP:
-                return AnimationUtils.scaleY(contentView, size[0]/2, size[1] , startScale, endScale, animation.getDuration());
+                return AnimationUtils.scaleY(contentView, size[0] / 2, size[1], startScale, endScale, animation.getDuration());
             case RIGHT:
-                return AnimationUtils.scaleX(contentView, 0, size[1]/2, startScale, endScale, animation.getDuration());
+                return AnimationUtils.scaleX(contentView, 0, size[1] / 2, startScale, endScale, animation.getDuration());
             case LEFT:
-                return AnimationUtils.scaleX(contentView, size[0], size[1]/2, startScale, endScale, animation.getDuration());
+                return AnimationUtils.scaleX(contentView, size[0], size[1] / 2, startScale, endScale, animation.getDuration());
             default:
                 return null;
         }
+    }
+
+    @IntDef({LEFT, TOP, RIGHT, BOTTOM})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Position {
+    }
+
+    /**
+     * Tooltip dismiss listener. {@link #onDismissed()} is called when tooltip is dismissed.
+     */
+    public interface Listener {
+        void onDismissed();
     }
 
     /**
@@ -768,6 +774,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * set tooltip's content view
+         *
          * @param view Content of the tooltip
          * @return Builder
          */
@@ -778,6 +785,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * set tooltip's anchor with position {@link #TOP}
+         *
          * @param view Anchor view
          * @return Builder
          */
@@ -788,7 +796,8 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Set tooltip's anchor with tooltip's relative position
-         * @param view Anchor view
+         *
+         * @param view     Anchor view
          * @param position position of tooltip relative to the anchor. {@link #TOP}, {@link #RIGHT},
          *                 {@link #BOTTOM}, {@link #LEFT}
          * @return Builder
@@ -801,6 +810,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Add Tooltip in this view
+         *
          * @param viewGroup {@link ViewGroup} root view (parent view) for the tooltip
          * @return Builder
          */
@@ -811,6 +821,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Whether the tooltip should be dismissed or not if clicked outside. Default it true
+         *
          * @param cancelable boolean
          * @return Builder
          */
@@ -835,6 +846,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Margin from the anchor and screen boundaries
+         *
          * @param padding - margin from the screen edge (in pixels).
          * @return Builder
          */
@@ -845,6 +857,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Attach dismiss listener
+         *
          * @param listener dismiss listener
          * @return Builder
          */
@@ -855,6 +868,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Show Tip. If null, it doesn't show the tip.
+         *
          * @param tip {@link Tip}
          * @return Builder
          */
@@ -866,7 +880,7 @@ public class Tooltip extends ViewGroup {
         /**
          * If you want the tooltip to dismiss automatically after a certain amount of time,
          * set it in milliseconds. Values &lt;= 0 are considered invalid and auto dismiss is turned off.
-         *
+         * <p>
          * Default is 0.
          *
          * @param timeInMilli dismiss time
@@ -904,6 +918,7 @@ public class Tooltip extends ViewGroup {
 
         /**
          * Show logs
+         *
          * @param debug boolean
          * @return Builder
          */
@@ -915,6 +930,7 @@ public class Tooltip extends ViewGroup {
         /**
          * Create a new instance of Tooltip. This method will throw {@link NullPointerException}
          * if {@link #anchorView} or {@link #rootView} or {@link #contentView} is not assigned.
+         *
          * @return {@link Tooltip}
          */
         public Tooltip build() {
@@ -991,27 +1007,24 @@ public class Tooltip extends ViewGroup {
      */
     public static class Tip {
 
+        private static final int DEFAULT_TIP_RADIUS = 0;
         /**
          * length of the base of isosceles triangle
          */
         private final int width;
-
         /**
          * length of the perpendicular from top vertex to the base
          */
         private final int height;
-
         /**
          * color of the tip.
          */
         @ColorInt
         private final int color;
-
         /**
          * Corner radius of the tip in px
          */
         private int tipRadius;
-        private static final int DEFAULT_TIP_RADIUS = 0;
 
         public Tip(int width, int height, int color, int tipRadius) {
             this.width = width;
@@ -1040,12 +1053,5 @@ public class Tooltip extends ViewGroup {
         public int getTipRadius() {
             return tipRadius;
         }
-    }
-
-    /**
-     * Tooltip dismiss listener. {@link #onDismissed()} is called when tooltip is dismissed.
-     */
-    public interface Listener {
-        void onDismissed();
     }
 }
